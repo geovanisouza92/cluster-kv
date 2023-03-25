@@ -1,0 +1,40 @@
+version: '2.1'
+
+services:
+  node0:
+    build: .
+    ports:
+      - "3000:9876"
+    volumes:
+      - ./data:/data
+    networks:
+      cluster:
+        ipv6_address: 2001:3200:3200::20
+  node1:
+    build: .
+    ports:
+      - "3001:9876"
+    volumes:
+      - ./data:/data
+    networks:
+      cluster:
+        ipv6_address: 2001:3200:3200::21
+  node2:
+    build: .
+    ports:
+      - "3002:9876"
+    volumes:
+      - ./data:/data
+    networks:
+      cluster:
+        ipv6_address: 2001:3200:3200::22
+
+networks:
+  cluster:
+    driver: bridge
+    enable_ipv6: true
+    ipam:
+      driver: default
+      config:
+        - subnet: 2001:3200:3200::/64
+          gateway: 2001:3200:3200::1
