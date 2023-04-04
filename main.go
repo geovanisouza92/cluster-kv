@@ -14,6 +14,7 @@ import (
 	"github.com/hashicorp/mdns"
 	"github.com/hashicorp/serf/serf"
 	"github.com/sirupsen/logrus"
+	"github.com/vmihailenco/msgpack/v5"
 )
 
 const (
@@ -23,11 +24,16 @@ const (
 
 var log *logrus.Logger
 
+type delEvent struct {
+	SourceNode string
+	Key        []byte
+}
+
 func main() {
 	log = logrus.New()
 	log.Formatter = new(logrus.JSONFormatter)
 
-	evCh := make(chan serf.Event, 64)
+	evCh := make(chan serf.Event, 1)
 	defer close(evCh)
 
 	cfg := serf.DefaultConfig()
@@ -125,7 +131,7 @@ func main() {
 
 	set := func(key, val []byte) error {
 		txn := db.NewTransaction(true)
-		if err := txn.Set([]byte(key), val); err != nil {
+		if err := txn.Set(key, val); err != nil {
 			log.WithField("key", key).Error(err)
 			return err
 		}
@@ -133,7 +139,7 @@ func main() {
 			log.WithField("key", key).Error(err)
 			return err
 		}
-		return cluster.UserEvent(clusterDel, key, false)
+		return nil
 	}
 
 	del := func(key []byte) error {
@@ -180,14 +186,25 @@ func main() {
 					}
 				}
 			case serf.EventUser:
-				u, ok := ev.(*serf.UserEvent)
+				u, ok := ev.(serf.UserEvent)
 				if !ok {
-					log.Error("invalid user event")
+					log.Errorf("invalid user event, type(%T): %v", ev, ev)
+					continue
+				}
+
+				var ev delEvent
+				if err := msgpack.Unmarshal(u.Payload, &ev); err != nil {
+					log.WithField("payload", u.Payload).Error(err)
+					continue
+				}
+
+				if ev.SourceNode == cluster.LocalMember().Name {
+					log.Debug("skipping delete request from self")
 					continue
 				}
 
 				if u.Name == clusterDel {
-					del(u.Payload)
+					del(ev.Key)
 				}
 			}
 		}
@@ -239,6 +256,17 @@ func main() {
 			if err := set(key, value); err != nil {
 				http.Error(w, err.Error(), http.StatusInternalServerError)
 				return
+			}
+
+			record := delEvent{SourceNode: cluster.LocalMember().Name, Key: key}
+			out, err := msgpack.Marshal(record)
+			if err != nil {
+				log.WithField("key", key).Error(err)
+				return
+			}
+			if err := cluster.UserEvent(clusterDel, out, false); err != nil {
+				log.WithField("key", key).Error(err)
+				http.Error(w, err.Error(), http.StatusInternalServerError)
 			}
 		}
 	})

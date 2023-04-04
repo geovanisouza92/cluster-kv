@@ -18,7 +18,7 @@ If none of the nodes have a value, it will return a 404.
 
 There is a default timeout calculated by the serf library, but it can be overridden by setting the `Timeout` query parameter.
 
-### Examples
+### Read example
 
 For unknown keys:
 
@@ -28,6 +28,8 @@ $ curl http://localhost:9876/foo -v
 >
 < HTTP/1.1 404 Not Found
 ```
+
+You can also read from any node in the cluster. If the key is not found locally, it will ask the other nodes in the cluster for the value. If a reply is given, it will store it locally and return it to the client.
 
 For known keys:
 
@@ -46,7 +48,7 @@ Sets the value for the given key.
 
 It will dispatch an event to the other nodes in the cluster to remove the key from their local stores (a.k.a. passive replication).
 
-### Examples
+### Write example
 
 ```bash
 $ curl http://localhost:9876/foo -d bar -v
@@ -55,3 +57,5 @@ $ curl http://localhost:9876/foo -d bar -v
 < HTTP/1.1 200 OK
 <
 ```
+
+You can also write to any node in the cluster. The other nodes will receive the event and remove the key from their local stores.

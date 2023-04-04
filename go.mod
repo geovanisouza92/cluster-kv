@@ -7,6 +7,7 @@ require (
 	github.com/hashicorp/mdns v1.0.4
 	github.com/hashicorp/serf v0.10.1
 	github.com/sirupsen/logrus v1.9.0
+	github.com/vmihailenco/msgpack/v5 v5.3.5
 )
 
 require (
@@ -34,6 +35,7 @@ require (
 	github.com/pkg/errors v0.9.1 // indirect
 	github.com/sean-/seed v0.0.0-20170313163322-e2103e2c3529 // indirect
 	github.com/stretchr/testify v1.8.0 // indirect
+	github.com/vmihailenco/tagparser/v2 v2.0.0 // indirect
 	go.opencensus.io v0.22.5 // indirect
 	golang.org/x/net v0.0.0-20210410081132-afb366fc7cd1 // indirect
 	golang.org/x/sys v0.0.0-20221010170243-090e33056c14 // indirect
