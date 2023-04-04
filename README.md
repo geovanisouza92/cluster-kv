@@ -14,9 +14,7 @@ Returns the value for the given key.
 
 If the key is not found locally, it will ask the other nodes in the cluster for the value. If the key is found, it will store it locally and return it to the client.
 
-If none of the nodes have a value, it will return a 404.
-
-There is a default timeout calculated by the serf library, but it can be overridden by setting the `Timeout` query parameter.
+If none of the nodes have a value, it will return a 404. This not found response can take a while to be returned, because there's a default timeout calculated by the serf library as an estimate of how long it would take to receive a reply from all the nodes in the cluster. That can be overridden by setting the `Timeout` query parameter inside the code.
 
 ### Read example
 
@@ -28,8 +26,6 @@ $ curl http://localhost:9876/foo -v
 >
 < HTTP/1.1 404 Not Found
 ```
-
-You can also read from any node in the cluster. If the key is not found locally, it will ask the other nodes in the cluster for the value. If a reply is given, it will store it locally and return it to the client.
 
 For known keys:
 
@@ -46,7 +42,7 @@ bar
 
 Sets the value for the given key.
 
-It will dispatch an event to the other nodes in the cluster to remove the key from their local stores (a.k.a. passive replication).
+You can write to any node in the cluster. It will dispatch an event to the other nodes in the cluster to remove the key from their local stores (a.k.a. passive replication).
 
 ### Write example
 
@@ -58,4 +54,12 @@ $ curl http://localhost:9876/foo -d bar -v
 <
 ```
 
-You can also write to any node in the cluster. The other nodes will receive the event and remove the key from their local stores.
+```bash
+$ curl http://localhost:9877/foo -d baz -v
+> POST /foo HTTP/1.1
+>
+< HTTP/1.1 200 OK
+<
+```
+
+If you query the value, you'll see that it's the same on both nodes: `baz`.
