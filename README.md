@@ -2,11 +2,11 @@
 
 This demonstrates how to use [serf](https://github.com/hashicorp/serf/serf), [mdns](https://github.com/hashicorp/mdns) and [badger](https://github.com/dgraph-io/badger/v4) to build a distributed key-value store.
 
-Serf is used to keep track of the nodes in the cluster and to dispatch events between them.
+Serf is used to keep track of the nodes in the cluster and to dispatch events between them. This examples uses queries to ask for the value of a key, and user events to remove a key from the local store of a node.
 
-mDNS is used to discover the nodes in the network without having to know their IP addresses. It's used only during startup of a new node.
+mDNS is used to discover the nodes in the network without having to know their IP addresses. It's used only during startup of a new node. It's only required for a new node to discover another node in the network. Once it's discovered, it will use serf to communicate and keep track of the other nodes.
 
-Badger is a high-performance key-value store. It's used to store the key-value pairs locally.
+Badger is a high-performance key-value store. It's used to store the key-value pairs locally. Right now there's no permanent persistence, but it's possible to rely on badger backups to achieve that, so a new node could start by restoring a backup and syncing with the other nodes.
 
 ## `GET /{key}`
 
